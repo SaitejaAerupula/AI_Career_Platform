@@ -25,6 +25,13 @@
 <body>
     <h2>Resume Analysis Result</h2>
 
+    {% if error %}
+        <div class="card" style="background-color: #ffebee; border: 2px solid #dc3545; color: #c41c3b;">
+            <h3 style="color: #dc3545;">❌ Error Processing File</h3>
+            <p><strong>{{ error }}</strong></p>
+            <p>Please go back and try uploading a different file.</p>
+        </div>
+    {% else %}
     <div class="card ats-section">
         <h3>🚀 ATS Resume Evaluation</h3>
         <p><b>ATS Score:</b> 
@@ -63,5 +70,6 @@
     </ul>
 
     <a href="/" class="btn-back">← Analyze Another Resume</a>
+    {% endif %}
 </body>
 </html>
