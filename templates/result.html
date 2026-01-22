@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analysis Result</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; max-width: 800px; margin: 0 auto; padding: 20px; color: #333; }
+        .card { border: 1px solid #ddd; padding: 20px; border-radius: 12px; margin-bottom: 20px; background-color: #f9f9f9; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        
+        /* ATS Specific Styling */
+        .ats-section { background-color: #f0f7ff; border: 2px solid #007bff; }
+        .score-high { color: #28a745; font-weight: bold; }
+        .score-med { color: #fd7e14; font-weight: bold; }
+        .score-low { color: #dc3545; font-weight: bold; }
+        
+        .skill-tag { display: inline-block; background: #e0e0e0; padding: 5px 12px; border-radius: 20px; margin: 5px; font-size: 0.9em; font-weight: 500; }
+        .recommendation-list { list-style-type: none; padding: 0; }
+        .recommendation-item { background: #fffbe6; border-left: 5px solid #ffcc00; margin: 10px 0; padding: 15px; border-radius: 4px; }
+        h2, h3 { color: #2c3e50; border-bottom: 2px solid #eee; padding-bottom: 10px; }
+        .score-val { font-weight: bold; font-size: 1.1em; }
+        .btn-back { display: inline-block; margin-top: 20px; text-decoration: none; color: #007bff; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <h2>Resume Analysis Result</h2>
+
+    <div class="card ats-section">
+        <h3>🚀 ATS Resume Evaluation</h3>
+        <p><b>ATS Score:</b> 
+            <span class="score-val {% if ats_score >= 80 %}score-high{% elif ats_score >= 50 %}score-med{% else %}score-low{% endif %}">
+                {{ ats_score }}%
+            </span>
+        </p>
+        <p><b>Expert Feedback:</b> <i>{{ ats_message }}</i></p>
+    </div>
+
+    <div class="card">
+        <h3>📊 Match Overview</h3>
+        <p><b>Extracted Skills:</b><br>
+            {% for skill in skills %}
+                <span class="skill-tag">{{ skill }}</span>
+            {% else %}
+                <span>No major skills detected.</span>
+            {% endfor %}
+        </p>
+        <p><b>Career Readiness:</b> <span class="score-val">{{ score }}%</span></p>
+        <p><b>Job Match:</b> <span class="score-val">{{ match }}%</span></p>
+        <p><b>Success Prediction:</b> <span class="score-val">{{ prediction }}%</span></p>
+    </div>
+
+    <hr>
+
+    <h3>📚 Recommended Courses</h3>
+    <ul class="recommendation-list">
+        {% for skill, course in recommendations.items() %}
+            <li class="recommendation-item">
+                <strong>{{ skill.upper() }}:</strong> {{ course }}
+            </li>
+        {% else %}
+            <li><strong>Excellent!</strong> Your profile already matches our target skill set perfectly.</li>
+        {% endfor %}
+    </ul>
+
+    <a href="/" class="btn-back">← Analyze Another Resume</a>
+</body>
+</html>
