@@ -1,0 +1,7 @@
+flask
+waitress
+spacy
+PyPDF2
+pandas
+scikit-learn
+gunicorn
