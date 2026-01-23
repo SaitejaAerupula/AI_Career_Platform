@@ -140,7 +140,11 @@ def analyze():
 
         # 6. ML Prediction (Conceptual)
         # Ensure 'model' is loaded globally if using machine learning
-        prediction = model.predict_proba([[len(skills), 1]])[0][1] * 100
+        prediction_data = pd.DataFrame({
+            'skills_count': [len(skills)],
+            'experience': [1]
+        })
+        prediction = model.predict_proba(prediction_data)[0][1] * 100
         
         # Calculate simple match percentage for display
         match_percent = (len(skills) / len(skill_keywords)) * 100
@@ -164,4 +168,4 @@ def analyze():
 from waitress import serve
 
 if __name__ == "__main__":
-    serve(app, host="0.0.0.0", port=8000)
+    serve(app, host="0.0.0.0", port=3000)
