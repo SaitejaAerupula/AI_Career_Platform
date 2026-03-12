@@ -11,9 +11,9 @@ An intelligent career platform that analyzes resumes, provides ATS scores, and r
 - **Blank/Scanned PDF Handling**: If a PDF has no readable text, the platform reports that clearly and can use OCR fallback when available
 - **Career Readiness Score**: Predictive analysis of job success probability
 
-### 📄 Professional CV Export
-- Generate a polished professional CV from the uploaded resume analysis
-- Download the generated CV as a PDF directly from the results page
+### 📄 Cold Email PDF Export
+- Generate a recruiter-ready cold email from uploaded resume analysis
+- Download the generated cold email as a PDF directly from the results page
 
 ### 💼 Job Recommendations
 - **Live Multi-Platform Job Search**: Fetch recent jobs from:
@@ -97,9 +97,54 @@ The application will be available at `http://localhost:8000`
    - Extracted skills
    - Resume section and contact-signal checks
    - Job role matches
-   - **Professional CV PDF download option**
+   - **Cold email PDF download option**
    - **Recent live jobs from LinkedIn, Naukri, and Glassdoor**
    - Course recommendations for missing skills
+
+## Deploy to Vercel
+
+This repository is configured to deploy the Flask app on Vercel using:
+- `api/index.py` as the Vercel Python entrypoint
+- `vercel.json` for route rewrites so all paths go to Flask
+
+### 1. Push your latest code to GitHub
+
+```bash
+git add .
+git commit -m "chore: prepare vercel deployment"
+git push origin main
+```
+
+### 2. Import project in Vercel
+
+1. Open Vercel dashboard
+2. Click **Add New Project**
+3. Import `SaitejaAerupula/AI_Career_Platform`
+4. Keep the **Root Directory** as project root
+5. Deploy
+
+### 3. Add environment variables in Vercel Project Settings
+
+Set the same values you use in `.env` (if needed):
+- `SENDER_EMAIL`
+- `SENDER_PASSWORD`
+- `SMTP_HOST`
+- `SMTP_PORT`
+- `ADZUNA_APP_ID`
+- `ADZUNA_APP_KEY`
+- `RAPIDAPI_KEY`
+- `JOB_SEARCH_LOCATION`
+- `JOB_SEARCH_REGION`
+- `JOB_RECENCY_DAYS`
+
+### 4. Redeploy after env updates
+
+Use **Deployments -> Redeploy** in Vercel after changing environment variables.
+
+### Important Vercel Notes
+
+- OCR on Vercel is usually limited because system binaries like `tesseract`/`pdftoppm` are not preinstalled.
+- For full OCR support, keep using a VM/container host (for example Render) or move OCR into a separate service.
 
 ## Current PDF Notes
 
