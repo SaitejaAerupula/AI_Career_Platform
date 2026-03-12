@@ -84,7 +84,23 @@ try:
 except ValueError:
     JOB_RECENCY_DAYS = 7
 
-LIVE_JOB_SEARCH_AVAILABLE = DDGS is not None
+ENABLE_LIVE_JOB_SEARCH = os.getenv("ENABLE_LIVE_JOB_SEARCH", "false").strip().lower() in {"1", "true", "yes"}
+LIVE_JOB_SEARCH_AVAILABLE = DDGS is not None and ENABLE_LIVE_JOB_SEARCH
+
+try:
+    JOB_FETCH_TOTAL_TIMEOUT_SECONDS = max(2.0, float(os.getenv("JOB_FETCH_TOTAL_TIMEOUT_SECONDS", "9")))
+except ValueError:
+    JOB_FETCH_TOTAL_TIMEOUT_SECONDS = 9.0
+
+try:
+    JOB_FETCH_PER_REQUEST_TIMEOUT_SECONDS = max(0.75, float(os.getenv("JOB_FETCH_PER_REQUEST_TIMEOUT_SECONDS", "3")))
+except ValueError:
+    JOB_FETCH_PER_REQUEST_TIMEOUT_SECONDS = 3.0
+
+try:
+    JOB_QUERY_VARIANTS_PER_SOURCE = max(1, int(os.getenv("JOB_QUERY_VARIANTS_PER_SOURCE", "1")))
+except ValueError:
+    JOB_QUERY_VARIANTS_PER_SOURCE = 1
 
 # ---- Skill Master List ----
 skill_keywords = [
@@ -206,7 +222,7 @@ def send_feedback_email(receiver_email, ats_score, message, skills):
     msg.attach(MIMEText(body, 'plain'))
 
     try:
-        server = smtplib.SMTP(SMTP_HOST, SMTP_PORT)
+        server = smtplib.SMTP(SMTP_HOST, SMTP_PORT, timeout=8)
         server.starttls()
         server.login(SENDER_EMAIL, SENDER_PASSWORD)
         server.send_message(msg)
@@ -232,6 +248,19 @@ def contains_normalized_term(normalized_text, term):
     normalized_term = normalize_text(term)
     pattern = rf"(?<![a-z0-9]){re.escape(normalized_term)}(?![a-z0-9])"
     return re.search(pattern, normalized_text) is not None
+
+def deadline_exceeded(deadline):
+    return deadline is not None and time.monotonic() >= deadline
+
+def bounded_request_timeout(deadline):
+    if deadline is None:
+        return JOB_FETCH_PER_REQUEST_TIMEOUT_SECONDS
+
+    remaining = deadline - time.monotonic()
+    if remaining <= 0:
+        return 0
+
+    return max(0.5, min(JOB_FETCH_PER_REQUEST_TIMEOUT_SECONDS, remaining))
 
 def extract_ocr_text_from_pdf_bytes(pdf_bytes):
     if not OCR_AVAILABLE:
@@ -1281,7 +1310,7 @@ def infer_company_name(title, snippet):
 def source_query_bases(source_name, domain):
     bases = SOURCE_QUERY_HINTS.get(source_name, [])
     if bases:
-        return bases
+        return bases[:JOB_QUERY_VARIANTS_PER_SOURCE]
     return [f"site:{domain}"]
 
 def source_domain_tokens(source_name, domain):
@@ -1323,15 +1352,19 @@ def looks_like_job_posting(title, description):
 
     return bool(JOB_SIGNAL_REGEX.search(text))
 
-def fetch_recent_jobs_from_google_news(source_name, domain, keywords, location, max_results):
+def fetch_recent_jobs_from_google_news(source_name, domain, keywords, location, max_results, deadline=None):
     def pull_from_query(query_terms):
         query = quote(" ".join(term for term in query_terms if term))
         feed_url = f"https://news.google.com/rss/search?q={query}&hl=en-IN&gl=IN&ceid=IN:en"
         pulled_jobs = []
 
+        request_timeout = bounded_request_timeout(deadline)
+        if request_timeout <= 0:
+            return pulled_jobs
+
         response = requests.get(
             feed_url,
-            timeout=8,
+            timeout=request_timeout,
             headers={"User-Agent": "Mozilla/5.0"},
         )
         response.raise_for_status()
@@ -1391,6 +1424,9 @@ def fetch_recent_jobs_from_google_news(source_name, domain, keywords, location, 
 
         seen_queries = set()
         for query_terms in query_batches:
+            if deadline_exceeded(deadline):
+                break
+
             query_key = tuple(query_terms)
             if query_key in seen_queries:
                 continue
@@ -1419,18 +1455,25 @@ def fetch_recent_jobs_from_google_news(source_name, domain, keywords, location, 
 
     return deduped
 
-def fetch_recent_jobs_from_bing_rss(source_name, domain, keywords, location, max_results):
+def fetch_recent_jobs_from_bing_rss(source_name, domain, keywords, location, max_results, deadline=None):
     jobs = []
 
     for query_base in source_query_bases(source_name, domain):
+        if deadline_exceeded(deadline):
+            break
+
         query_terms = [query_base] + keywords[:4] + [location, "jobs"]
         query = quote(" ".join(term for term in query_terms if term))
         feed_url = f"https://www.bing.com/search?q={query}&format=rss"
 
         try:
+            request_timeout = bounded_request_timeout(deadline)
+            if request_timeout <= 0:
+                break
+
             response = requests.get(
                 feed_url,
-                timeout=8,
+                timeout=request_timeout,
                 headers={"User-Agent": "Mozilla/5.0"},
             )
             response.raise_for_status()
@@ -1480,16 +1523,19 @@ def fetch_recent_jobs_from_bing_rss(source_name, domain, keywords, location, max
 
     return jobs
 
-def fetch_recent_jobs_from_domain(source_name, domain, keywords, location, max_results):
+def fetch_recent_jobs_from_domain(source_name, domain, keywords, location, max_results, deadline=None):
+    if deadline_exceeded(deadline):
+        return []
+
     search_terms = " ".join(keywords[:5]) if keywords else "software engineer"
     query = f"{source_query_bases(source_name, domain)[0]} {search_terms} {location} jobs"
     timelimit = search_recency_timelimit()
     jobs = []
 
     if not LIVE_JOB_SEARCH_AVAILABLE:
-        combined = fetch_recent_jobs_from_google_news(source_name, domain, keywords, location, max_results)
+        combined = fetch_recent_jobs_from_google_news(source_name, domain, keywords, location, max_results, deadline=deadline)
         if len(combined) < max_results:
-            combined.extend(fetch_recent_jobs_from_bing_rss(source_name, domain, keywords, location, max_results))
+            combined.extend(fetch_recent_jobs_from_bing_rss(source_name, domain, keywords, location, max_results, deadline=deadline))
         jobs = combined
     else:
         try:
@@ -1536,12 +1582,12 @@ def fetch_recent_jobs_from_domain(source_name, domain, keywords, location, max_r
         except Exception as error:
             print(f"{source_name} live search error: {error}")
 
-    if len(jobs) < max(1, max_results // 2):
-        fallback_jobs = fetch_recent_jobs_from_google_news(source_name, domain, keywords, location, max_results)
+    if len(jobs) < max(1, max_results // 2) and not deadline_exceeded(deadline):
+        fallback_jobs = fetch_recent_jobs_from_google_news(source_name, domain, keywords, location, max_results, deadline=deadline)
         jobs.extend(fallback_jobs)
 
-    if len(jobs) < max_results:
-        jobs.extend(fetch_recent_jobs_from_bing_rss(source_name, domain, keywords, location, max_results))
+    if len(jobs) < max_results and not deadline_exceeded(deadline):
+        jobs.extend(fetch_recent_jobs_from_bing_rss(source_name, domain, keywords, location, max_results, deadline=deadline))
 
     deduped = []
     seen = set()
@@ -1559,14 +1605,14 @@ def fetch_recent_jobs_from_domain(source_name, domain, keywords, location, max_r
 
     return deduped
 
-def fetch_linkedin_jobs(keywords, location=JOB_SEARCH_LOCATION, max_results=8):
-    return fetch_recent_jobs_from_domain("LinkedIn", LIVE_JOB_DOMAINS["LinkedIn"], keywords, location, max_results)
+def fetch_linkedin_jobs(keywords, location=JOB_SEARCH_LOCATION, max_results=8, deadline=None):
+    return fetch_recent_jobs_from_domain("LinkedIn", LIVE_JOB_DOMAINS["LinkedIn"], keywords, location, max_results, deadline=deadline)
 
-def fetch_naukri_jobs(keywords, location=JOB_SEARCH_LOCATION, max_results=8):
-    return fetch_recent_jobs_from_domain("Naukri", LIVE_JOB_DOMAINS["Naukri"], keywords, location, max_results)
+def fetch_naukri_jobs(keywords, location=JOB_SEARCH_LOCATION, max_results=8, deadline=None):
+    return fetch_recent_jobs_from_domain("Naukri", LIVE_JOB_DOMAINS["Naukri"], keywords, location, max_results, deadline=deadline)
 
-def fetch_glassdoor_jobs(keywords, location=JOB_SEARCH_LOCATION, max_results=8):
-    return fetch_recent_jobs_from_domain("Glassdoor", LIVE_JOB_DOMAINS["Glassdoor"], keywords, location, max_results)
+def fetch_glassdoor_jobs(keywords, location=JOB_SEARCH_LOCATION, max_results=8, deadline=None):
+    return fetch_recent_jobs_from_domain("Glassdoor", LIVE_JOB_DOMAINS["Glassdoor"], keywords, location, max_results, deadline=deadline)
 
 def aggregate_job_recommendations(skills, job_roles_matched, max_per_source=6):
     """Fetch recent live jobs from LinkedIn, Naukri, and Glassdoor based on resume skills."""
@@ -1579,15 +1625,23 @@ def aggregate_job_recommendations(skills, job_roles_matched, max_per_source=6):
     if not keywords:
         keywords = ["software", "engineer"]
 
+    deadline = time.monotonic() + JOB_FETCH_TOTAL_TIMEOUT_SECONDS
+
     sources = [
-        fetch_linkedin_jobs(keywords, max_results=max_per_source),
-        fetch_naukri_jobs(keywords, max_results=max_per_source),
-        fetch_glassdoor_jobs(keywords, max_results=max_per_source),
+        ("LinkedIn", lambda: fetch_linkedin_jobs(keywords, max_results=max_per_source, deadline=deadline)),
+        ("Naukri", lambda: fetch_naukri_jobs(keywords, max_results=max_per_source, deadline=deadline)),
+        ("Glassdoor", lambda: fetch_glassdoor_jobs(keywords, max_results=max_per_source, deadline=deadline)),
     ]
 
-    for source_jobs in sources:
-        all_jobs.extend(source_jobs)
-        time.sleep(0.5)
+    for source_name, fetcher in sources:
+        if deadline_exceeded(deadline):
+            break
+
+        try:
+            source_jobs = fetcher()
+            all_jobs.extend(source_jobs)
+        except Exception as error:
+            print(f"{source_name} fetch skipped due to error: {error}")
 
     seen = set()
     unique_jobs = []
