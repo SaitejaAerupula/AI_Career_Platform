@@ -1,9 +1,6 @@
 from flask import Flask, render_template, request, send_file
-import spacy
-import pandas as pd
 from PyPDF2 import PdfReader
 from PyPDF2.errors import PdfReadError
-from sklearn.linear_model import LogisticRegression
 from waitress import serve
 import smtplib
 from email.mime.text import MIMEText
@@ -17,6 +14,7 @@ from email.utils import parsedate_to_datetime
 import time
 from collections import Counter
 import re
+import math
 from io import BytesIO
 import shutil
 import uuid
@@ -53,7 +51,6 @@ except Exception:
 
 # ---- App Initialization ----
 app = Flask(__name__)
-nlp = spacy.load("en_core_web_sm")
 
 # Load environment variables
 load_dotenv()
@@ -149,6 +146,22 @@ GENERIC_JOB_TERMS = {
     "role", "skills", "strong", "team", "work", "working", "years"
 }
 
+COMMON_STOP_WORDS = {
+    "a", "about", "above", "after", "again", "against", "all", "am", "an", "and",
+    "any", "are", "as", "at", "be", "because", "been", "before", "being", "below",
+    "between", "both", "but", "by", "can", "could", "did", "do", "does", "doing",
+    "down", "during", "each", "few", "for", "from", "further", "had", "has", "have",
+    "having", "he", "her", "here", "hers", "herself", "him", "himself", "his", "how",
+    "i", "if", "in", "into", "is", "it", "its", "itself", "just", "me", "more",
+    "most", "my", "myself", "no", "nor", "not", "of", "off", "on", "once", "only",
+    "or", "other", "our", "ours", "ourselves", "out", "over", "own", "same", "she",
+    "should", "so", "some", "such", "than", "that", "the", "their", "theirs", "them",
+    "themselves", "then", "there", "these", "they", "this", "those", "through", "to",
+    "too", "under", "until", "up", "very", "was", "we", "were", "what", "when",
+    "where", "which", "while", "who", "whom", "why", "will", "with", "you", "your",
+    "yours", "yourself", "yourselves"
+}
+
 EMAIL_REGEX = re.compile(r"[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}", re.IGNORECASE)
 PHONE_REGEX = re.compile(r"(?:\+?\d{1,3}[\s.-]?)?(?:\(?\d{3}\)?[\s.-]?)?\d{3}[\s.-]?\d{4}")
 YEAR_REGEX = re.compile(r"\b([1-9]\d?)\+?\s*(?:years?|yrs?)\b", re.IGNORECASE)
@@ -158,23 +171,16 @@ METRIC_REGEX = re.compile(
 )
 URL_REGEX = re.compile(r"(?:https?://|www\.)[^\s]+", re.IGNORECASE)
 
-# ---- ML Model (Demo Logistic Regression) ----
-data = {
-    "skills_count": [2, 4, 6, 8, 10],
-    "experience": [0, 1, 2, 3, 4],
-    "selected": [0, 0, 1, 1, 1]
-}
-df = pd.DataFrame(data)
-
-X = df[["skills_count", "experience"]]
-y = df["selected"]
-
-model = LogisticRegression()
-model.fit(X, y)
-
 # -------------------------------------------------
 # Helper Functions
 # -------------------------------------------------
+
+def predict_selection_probability(skills_count, experience_years):
+    bounded_skills = min(max(skills_count, 0), 10)
+    bounded_experience = min(max(experience_years, 0), 4)
+    linear_score = -2.8 + (0.42 * bounded_skills) + (0.85 * bounded_experience)
+    probability = 1 / (1 + math.exp(-linear_score))
+    return round(probability * 100, 2)
 
 def send_feedback_email(receiver_email, ats_score, message, skills):
     """Sends analysis results to the user's email securely."""
@@ -357,7 +363,7 @@ def extract_contact_signals(text):
     }
 
 def extract_top_terms(text, limit=8):
-    stop_words = set(nlp.Defaults.stop_words) | GENERIC_JOB_TERMS
+    stop_words = COMMON_STOP_WORDS | GENERIC_JOB_TERMS
     counts = Counter()
 
     for token in re.findall(r"[a-zA-Z][a-zA-Z+#.]{2,}", normalize_text(text)):
@@ -373,7 +379,7 @@ def extract_target_keywords(job_desc, limit=12):
     counts = Counter()
 
     for token in re.findall(r"[a-zA-Z][a-zA-Z+#.]{2,}", normalized_desc):
-        if token in GENERIC_JOB_TERMS or token in nlp.Defaults.stop_words:
+        if token in GENERIC_JOB_TERMS or token in COMMON_STOP_WORDS:
             continue
         counts[token] += 1
 
@@ -1651,11 +1657,7 @@ def analyze():
 
         if analysis["has_text"]:
             estimated_experience = min(analysis["estimated_experience_years"], 4)
-            prediction_data = pd.DataFrame({
-                "skills_count": [min(len(skills), 10)],
-                "experience": [estimated_experience],
-            })
-            selection_probability = model.predict_proba(prediction_data)[0][1] * 100
+            selection_probability = predict_selection_probability(min(len(skills), 10), estimated_experience)
             match_percent = round((len(analysis["alignment"]["matched_keywords"]) / len(analysis["alignment"]["target_keywords"])) * 100, 2) if analysis["alignment"]["target_keywords"] else round((len(skills) / max(len(skill_keywords), 1)) * 100, 2)
             readiness_score = round((ats_score * 0.7) + (selection_probability * 0.3), 2)
             job_recommendations = aggregate_job_recommendations(skills, job_matches, max_per_source=5)
