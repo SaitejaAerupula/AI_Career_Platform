@@ -2,23 +2,212 @@
 <html>
 <head>
     <title>AI Career Readiness</title>
+    <style>
+        :root {
+            --brand-navy: #0f172a;
+            --brand-cyan: #0891b2;
+            --brand-sky: #0ea5e9;
+            --brand-gold: #f59e0b;
+            --surface: #ffffff;
+            --text: #1e293b;
+            --muted: #64748b;
+            --border: #d1d5db;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+            background:
+                radial-gradient(circle at 15% 20%, rgba(14, 165, 233, 0.28), transparent 34%),
+                radial-gradient(circle at 85% 15%, rgba(245, 158, 11, 0.2), transparent 36%),
+                linear-gradient(140deg, #eff6ff 0%, #f8fafc 50%, #ecfeff 100%);
+            color: var(--text);
+            margin: 0;
+            min-height: 100vh;
+            padding: 30px 16px;
+        }
+
+        .wrapper {
+            max-width: 980px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.92);
+            border-radius: 26px;
+            padding: 34px;
+            box-shadow: 0 30px 90px rgba(15, 23, 42, 0.12);
+            border: 1px solid rgba(148, 163, 184, 0.35);
+            display: grid;
+            grid-template-columns: minmax(280px, 1fr) minmax(380px, 1.2fr);
+            gap: 26px;
+        }
+
+        .hero {
+            background: linear-gradient(165deg, #0f172a 0%, #0b3f63 58%, #0ea5e9 100%);
+            color: #e2e8f0;
+            border-radius: 20px;
+            padding: 24px 22px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero::after {
+            content: "";
+            width: 180px;
+            height: 180px;
+            border-radius: 50%;
+            position: absolute;
+            right: -45px;
+            bottom: -75px;
+            background: rgba(245, 158, 11, 0.25);
+        }
+
+        h2 {
+            margin-top: 0;
+            font-size: 2.1rem;
+            line-height: 1.15;
+            letter-spacing: 0.01em;
+        }
+
+        p {
+            color: var(--muted);
+            margin-top: 0;
+        }
+
+        .hero p {
+            color: #cbd5e1;
+            margin-bottom: 0;
+        }
+
+        .hero-list {
+            margin: 14px 0 0;
+            padding-left: 18px;
+            color: #e2e8f0;
+            font-size: 0.95rem;
+        }
+
+        .hero-list li {
+            margin-bottom: 6px;
+        }
+
+        .form-shell {
+            background: var(--surface);
+            border-radius: 18px;
+            border: 1px solid #dbe6f0;
+            padding: 22px;
+            box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.6);
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 700;
+            color: #0f172a;
+            font-size: 0.94rem;
+        }
+
+        input,
+        textarea {
+            width: 100%;
+            padding: 12px 14px;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            font-size: 1rem;
+            background: #f8fafc;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        input:focus,
+        textarea:focus {
+            outline: none;
+            border-color: var(--brand-sky);
+            box-shadow: 0 0 0 4px rgba(14, 165, 233, 0.14);
+        }
+
+        textarea {
+            min-height: 150px;
+            resize: vertical;
+        }
+
+        .field {
+            margin-bottom: 20px;
+        }
+
+        .hint {
+            margin-top: 6px;
+            font-size: 0.92rem;
+            color: #5b6b81;
+        }
+
+        button {
+            background: linear-gradient(115deg, #0f172a 0%, #0b4b78 55%, #0891b2 100%);
+            color: #ffffff;
+            border: none;
+            border-radius: 12px;
+            padding: 14px 22px;
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+            width: 100%;
+            letter-spacing: 0.01em;
+            box-shadow: 0 12px 24px rgba(8, 145, 178, 0.25);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        button:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 14px 28px rgba(8, 145, 178, 0.35);
+        }
+
+        @media (max-width: 920px) {
+            .wrapper {
+                grid-template-columns: 1fr;
+                padding: 24px;
+            }
+
+            h2 {
+                font-size: 1.75rem;
+            }
+        }
+    </style>
 </head>
 <body>
-    <h2>AI-Driven Career Readiness Platform</h2>
-<form action="/analyze" method="POST" enctype="multipart/form-data">
-        
-        <label for="email">Email Address:</label><br>
-        <input type="email" id="email" name="email" placeholder="Enter your email" required>
-        
-        <br><br>
+    <div class="wrapper">
+        <section class="hero">
+            <h2>Career Intelligence Platform</h2>
+            <p>Transform raw resumes into ATS insights, role alignment, and recruiter-ready cold email PDFs in one flow.</p>
+            <ul class="hero-list">
+                <li>ATS scoring tuned for real job-description matching</li>
+                <li>Blank PDF and scanned PDF handling with OCR fallback</li>
+                <li>Instant cold email PDF generation from resume content</li>
+            </ul>
+        </section>
 
-        <label for="resume">Upload Resume (PDF/Docx):</label><br>
-        <input type="file" id="resume" name="resume" accept=".pdf,.doc,.docx" required>
-        
-        <br><br>
+        <section class="form-shell">
+            <form action="/analyze" method="POST" enctype="multipart/form-data">
+                <div class="field">
+                    <label for="email">Email Address</label>
+                    <input type="email" id="email" name="email" placeholder="Enter your email for report delivery (optional)">
+                    <div class="hint">The analysis runs even if you leave this blank.</div>
+                </div>
 
-        <button type="submit">Analyze Resume</button>
-    </form>
+                <div class="field">
+                    <label for="resume">Upload Resume (PDF)</label>
+                    <input type="file" id="resume" name="resume" accept=".pdf" required>
+                    <div class="hint">Text-based PDFs are analyzed directly. Scanned PDFs use OCR when available.</div>
+                </div>
+
+                <div class="field">
+                    <label for="job_desc">Target Job Description</label>
+                    <textarea id="job_desc" name="job_desc" placeholder="Paste the target job description for a role-specific ATS score."></textarea>
+                    <div class="hint">Providing this field gives a targeted ATS score and better gap analysis.</div>
+                </div>
+
+                <button type="submit">Analyze Resume</button>
+            </form>
+        </section>
+    </div>
 
 </body>
 </html>

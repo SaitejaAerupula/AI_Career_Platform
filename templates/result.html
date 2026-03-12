@@ -5,71 +5,588 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Analysis Result</title>
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; max-width: 800px; margin: 0 auto; padding: 20px; color: #333; }
-        .card { border: 1px solid #ddd; padding: 20px; border-radius: 12px; margin-bottom: 20px; background-color: #f9f9f9; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
-        
-        /* ATS Specific Styling */
-        .ats-section { background-color: #f0f7ff; border: 2px solid #007bff; }
-        .score-high { color: #28a745; font-weight: bold; }
-        .score-med { color: #fd7e14; font-weight: bold; }
-        .score-low { color: #dc3545; font-weight: bold; }
-        
-        .skill-tag { display: inline-block; background: #e0e0e0; padding: 5px 12px; border-radius: 20px; margin: 5px; font-size: 0.9em; font-weight: 500; }
-        .recommendation-list { list-style-type: none; padding: 0; }
-        .recommendation-item { background: #fffbe6; border-left: 5px solid #ffcc00; margin: 10px 0; padding: 15px; border-radius: 4px; }
-        h2, h3 { color: #2c3e50; border-bottom: 2px solid #eee; padding-bottom: 10px; }
-        .score-val { font-weight: bold; font-size: 1.1em; }
-        .btn-back { display: inline-block; margin-top: 20px; text-decoration: none; color: #007bff; font-weight: bold; }
+        :root {
+            --ink: #0f172a;
+            --muted: #64748b;
+            --blue: #2563eb;
+            --cyan: #0ea5e9;
+            --teal: #0891b2;
+            --amber: #f59e0b;
+            --green: #16a34a;
+            --red: #dc2626;
+            --surface: #ffffff;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            max-width: 1120px;
+            margin: 0 auto;
+            padding: 22px 16px 42px;
+            color: #1f2937;
+            background:
+                radial-gradient(circle at 12% 10%, rgba(14, 165, 233, 0.2), transparent 36%),
+                radial-gradient(circle at 88% 0%, rgba(245, 158, 11, 0.18), transparent 40%),
+                linear-gradient(145deg, #ecfeff 0%, #f8fafc 42%, #eff6ff 100%);
+        }
+
+        .topbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 14px;
+        }
+
+        .topbar h2 {
+            margin: 0;
+            color: var(--ink);
+            letter-spacing: 0.01em;
+        }
+
+        .panel {
+            border: 1px solid #dbe2ea;
+            padding: 22px;
+            border-radius: 18px;
+            margin-bottom: 20px;
+            background-color: var(--surface);
+            box-shadow: 0 18px 35px rgba(15, 23, 42, 0.06);
+        }
+
+        .hero {
+            background: linear-gradient(130deg, #0f172a 0%, #113b62 55%, #0ea5e9 100%);
+            border: 2px solid #0f172a;
+            color: #e2e8f0;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero::after {
+            content: "";
+            width: 220px;
+            height: 220px;
+            border-radius: 50%;
+            position: absolute;
+            right: -60px;
+            top: -70px;
+            background: rgba(245, 158, 11, 0.28);
+        }
+
+        .hero h3,
+        .hero p,
+        .hero b,
+        .hero i {
+            color: #f8fafc;
+            position: relative;
+            z-index: 1;
+        }
+
+        .muted {
+            color: var(--muted);
+        }
+
+        .score-high { color: #22c55e; font-weight: bold; }
+        .score-med { color: #f59e0b; font-weight: bold; }
+        .score-low { color: #fca5a5; font-weight: bold; }
+
+        .score-val {
+            font-weight: 700;
+            font-size: 1.15em;
+        }
+
+        .layout-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 18px;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(185px, 1fr));
+            gap: 14px;
+        }
+
+        .metric-box {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 14px;
+        }
+
+        .metric-label {
+            display: block;
+            font-size: 0.86rem;
+            color: var(--muted);
+            margin-bottom: 5px;
+        }
+
+        .metric-value {
+            display: block;
+            font-weight: 800;
+            font-size: 1.24rem;
+            color: #0f172a;
+        }
+
+        .chip {
+            display: inline-block;
+            border-radius: 999px;
+            padding: 5px 11px;
+            font-size: 0.82rem;
+            font-weight: 700;
+            margin-right: 6px;
+            margin-bottom: 8px;
+            border: 1px solid transparent;
+        }
+
+        .chip.good {
+            background: #dcfce7;
+            color: #166534;
+            border-color: #86efac;
+        }
+
+        .chip.warn {
+            background: #fee2e2;
+            color: #991b1b;
+            border-color: #fecaca;
+        }
+
+        .chip.info {
+            background: #dbeafe;
+            color: #1d4ed8;
+            border-color: #bfdbfe;
+        }
+
+        .chip.neutral {
+            background: #e2e8f0;
+            color: #334155;
+            border-color: #cbd5e1;
+        }
+
+        .breakdown-row {
+            display: flex;
+            justify-content: space-between;
+            gap: 12px;
+            padding: 10px 0;
+            border-bottom: 1px dashed #cbd5e1;
+        }
+
+        .breakdown-row:last-child {
+            border-bottom: none;
+        }
+
+        .recommendation-list {
+            list-style-type: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .recommendation-item {
+            background: #fffbea;
+            border-left: 5px solid var(--amber);
+            margin: 10px 0;
+            padding: 14px;
+            border-radius: 8px;
+        }
+
+        .text-preview {
+            background: #0f172a;
+            color: #e2e8f0;
+            padding: 16px;
+            border-radius: 12px;
+            white-space: pre-wrap;
+            overflow-wrap: anywhere;
+            font-size: 0.92rem;
+        }
+
+        .btn {
+            display: inline-block;
+            text-decoration: none;
+            border-radius: 12px;
+            padding: 12px 18px;
+            font-weight: 700;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .btn:hover {
+            transform: translateY(-1px);
+        }
+
+        .btn-primary {
+            background: linear-gradient(120deg, #1d4ed8 0%, #0ea5e9 100%);
+            color: #ffffff;
+            box-shadow: 0 12px 24px rgba(14, 116, 144, 0.28);
+        }
+
+        .btn-back {
+            color: #1d4ed8;
+            background: #eff6ff;
+            border: 1px solid #bfdbfe;
+        }
+
+        .soft-alert {
+            background: #fff7ed;
+            border-color: #fdba74;
+        }
+
+        .error {
+            background-color: #fef2f2;
+            border: 2px solid #dc2626;
+            color: #991b1b;
+        }
+
+        .job-card { 
+            background: white; 
+            border: 1px solid #dbe2ea; 
+            border-radius: 12px; 
+            padding: 20px; 
+            margin-bottom: 20px; 
+            box-shadow: 0 8px 18px rgba(15, 23, 42, 0.08);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .job-card:hover { 
+            transform: translateY(-2px); 
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        .job-header { 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: start; 
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+        .job-title { 
+            margin: 0; 
+            color: #2c3e50; 
+            font-size: 1.2em;
+            flex: 1;
+        }
+        .job-title a { 
+            color: #0f4aa2; 
+            text-decoration: none; 
+        }
+        .job-title a:hover { 
+            text-decoration: underline; 
+        }
+        .job-source { 
+            background: #0f4aa2; 
+            color: white; 
+            padding: 4px 12px; 
+            border-radius: 12px; 
+            font-size: 0.85em;
+            font-weight: 500;
+            margin-left: 10px;
+        }
+        .job-details { 
+            margin: 15px 0; 
+            color: #555; 
+        }
+        .job-details p { 
+            margin: 8px 0; 
+        }
+        .job-description { 
+            background: #f8f9fa; 
+            padding: 10px; 
+            border-radius: 4px; 
+            font-style: italic;
+            margin-top: 10px;
+        }
+        .apply-btn { 
+            display: inline-block; 
+            background: #0f766e; 
+            color: white; 
+            padding: 10px 20px; 
+            border-radius: 5px; 
+            text-decoration: none; 
+            font-weight: bold;
+            margin-top: 10px;
+            transition: background 0.2s;
+        }
+        .apply-btn:hover { 
+            background: #115e59; 
+        }
+
+        @media (max-width: 760px) {
+            .topbar {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+        }
     </style>
 </head>
 <body>
-    <h2>Resume Analysis Result</h2>
+    <div class="topbar">
+        <h2>Resume Intelligence Dashboard</h2>
+        <a href="/" class="btn btn-back">Analyze Another Resume</a>
+    </div>
 
     {% if error %}
-        <div class="card" style="background-color: #ffebee; border: 2px solid #dc3545; color: #c41c3b;">
-            <h3 style="color: #dc3545;">❌ Error Processing File</h3>
+        <div class="panel error">
+            <h3>Error Processing File</h3>
             <p><strong>{{ error }}</strong></p>
             <p>Please go back and try uploading a different file.</p>
         </div>
     {% else %}
-    <div class="card ats-section">
-        <h3>🚀 ATS Resume Evaluation</h3>
+    <div class="layout-grid">
+    <div class="panel hero">
+        <h3>ATS Resume Evaluation</h3>
         <p><b>ATS Score:</b> 
             <span class="score-val {% if ats_score >= 80 %}score-high{% elif ats_score >= 50 %}score-med{% else %}score-low{% endif %}">
                 {{ ats_score }}%
             </span>
         </p>
         <p><b>Expert Feedback:</b> <i>{{ ats_message }}</i></p>
+        <p class="muted">
+            {% if job_desc_provided %}
+                Targeted ATS scoring was calculated against the job description you provided.
+            {% else %}
+                No job description was provided, so this score is based on general ATS readiness and resume quality.
+            {% endif %}
+        </p>
+        {% if email_status %}
+            <p><b>Email Status:</b> {{ email_status }}</p>
+        {% endif %}
     </div>
 
-    <div class="card">
-        <h3>📊 Match Overview</h3>
+    <div class="panel">
+        <h3>Cold Email Outreach</h3>
+        {% if cv_download_id %}
+            <p class="muted">Generate a professional cold email template based on your resume and download it as a PDF. If you provide a target job description, the role and company details are auto-filled for better recruiter outreach.</p>
+            <a class="btn btn-primary" href="/download-cv/{{ cv_download_id }}">Download Cold Email (PDF)</a>
+        {% else %}
+            <p class="muted">{{ cv_generation_status }}</p>
+        {% endif %}
+    </div>
+
+    <div class="panel {% if not analysis.has_text %}soft-alert{% endif %}">
+        <h3>Document Check</h3>
+        <div class="grid">
+            <div class="metric-box">
+                <span class="metric-label">Pages</span>
+                <span class="metric-value">{{ page_count }}</span>
+            </div>
+            <div class="metric-box">
+                <span class="metric-label">Readable Pages</span>
+                <span class="metric-value">{{ extractable_pages }}</span>
+            </div>
+            <div class="metric-box">
+                <span class="metric-label">Words Detected</span>
+                <span class="metric-value">{{ analysis.word_count }}</span>
+            </div>
+            <div class="metric-box">
+                <span class="metric-label">Average Sentence Length</span>
+                <span class="metric-value">{{ analysis.avg_sentence_length }}</span>
+            </div>
+        </div>
+
+        <p>
+            {% if text_source == "digital" %}
+                <span class="chip good">Text extracted directly from PDF</span>
+            {% elif text_source == "ocr" %}
+                <span class="chip info">OCR extraction was used</span>
+            {% else %}
+                <span class="chip warn">No readable text detected</span>
+            {% endif %}
+
+            {% if ocr_available %}
+                <span class="chip neutral">OCR engine available</span>
+            {% else %}
+                <span class="chip neutral">OCR engine not installed</span>
+            {% endif %}
+        </p>
+
+        {% if analysis.has_text %}
+            <p><strong>Status:</strong> Resume text was successfully extracted and analyzed.</p>
+            <p><strong>Detected Themes:</strong>
+                {% for term in analysis.top_terms[:10] %}
+                    <span class="chip neutral">{{ term }}</span>
+                {% else %}
+                    <span class="muted">No strong repeated terms were found.</span>
+                {% endfor %}
+            </p>
+        {% else %}
+            <p><strong>Status:</strong> No readable text was found in this PDF. The file may be blank or it may contain only scanned images.</p>
+            <p>The platform did not invent a score from empty content. Upload a PDF with selectable text and the full analysis will run.</p>
+        {% endif %}
+    </div>
+
+    <div class="panel">
+        <h3>Match Overview</h3>
+        <div class="grid" style="margin-bottom: 16px;">
+            <div class="metric-box">
+                <span class="metric-label">Resume Quality</span>
+                <span class="metric-value">{{ score }}%</span>
+            </div>
+            <div class="metric-box">
+                <span class="metric-label">Job Match</span>
+                <span class="metric-value">{{ match }}%</span>
+            </div>
+            <div class="metric-box">
+                <span class="metric-label">Selection Prediction</span>
+                <span class="metric-value">{{ prediction }}%</span>
+            </div>
+            <div class="metric-box">
+                <span class="metric-label">Estimated Experience</span>
+                <span class="metric-value">{{ analysis.estimated_experience_years }} years</span>
+            </div>
+        </div>
+
         <p><b>Extracted Skills:</b><br>
             {% for skill in skills %}
-                <span class="skill-tag">{{ skill }}</span>
+                <span class="chip neutral">{{ skill }}</span>
             {% else %}
                 <span>No major skills detected.</span>
             {% endfor %}
         </p>
-        <p><b>Career Readiness:</b> <span class="score-val">{{ score }}%</span></p>
-        <p><b>Job Match:</b> <span class="score-val">{{ match }}%</span></p>
-        <p><b>Success Prediction:</b> <span class="score-val">{{ prediction }}%</span></p>
+
+        <p><b>Sections Found:</b><br>
+            {% for section in analysis.sections %}
+                <span class="chip neutral">{{ section }}</span>
+            {% else %}
+                <span class="muted">No standard resume section headings were detected.</span>
+            {% endfor %}
+        </p>
+
+        <p><b>Contact Signals:</b><br>
+            {% if analysis.contact_signals.email %}<span class="chip good">email</span>{% else %}<span class="chip warn">email missing</span>{% endif %}
+            {% if analysis.contact_signals.phone %}<span class="chip good">phone</span>{% else %}<span class="chip warn">phone missing</span>{% endif %}
+            {% if analysis.contact_signals.linkedin %}<span class="chip good">linkedin</span>{% endif %}
+            {% if analysis.contact_signals.github %}<span class="chip good">github</span>{% endif %}
+            {% if analysis.contact_signals.website %}<span class="chip good">website</span>{% endif %}
+        </p>
+
+        <p><b>Detected Metrics and Outcomes:</b><br>
+            {% for item in analysis.metrics %}
+                <span class="chip good">{{ item }}</span>
+            {% else %}
+                <span class="muted">No measurable achievements were detected.</span>
+            {% endfor %}
+        </p>
     </div>
 
-    <hr>
-
-    <h3>📚 Recommended Courses</h3>
-    <ul class="recommendation-list">
-        {% for skill, course in recommendations.items() %}
-            <li class="recommendation-item">
-                <strong>{{ skill.upper() }}:</strong> {{ course }}
-            </li>
-        {% else %}
-            <li><strong>Excellent!</strong> Your profile already matches our target skill set perfectly.</li>
+    <div class="panel">
+        <h3>ATS Breakdown</h3>
+        {% for item in analysis.breakdown %}
+            <div class="breakdown-row">
+                <span>{{ item.label }}</span>
+                <span class="score-val">{{ item.score }}/{{ item.max_score }}</span>
+            </div>
         {% endfor %}
-    </ul>
+    </div>
 
-    <a href="/" class="btn-back">← Analyze Another Resume</a>
+    <div class="panel">
+        <h3>Keyword Alignment</h3>
+        <p><b>Matched Keywords:</b><br>
+            {% for keyword in analysis.alignment.matched_keywords %}
+                <span class="chip good">{{ keyword }}</span>
+            {% else %}
+                <span class="muted">No direct keyword matches were found.</span>
+            {% endfor %}
+        </p>
+        <p><b>Missing Keywords:</b><br>
+            {% for keyword in analysis.alignment.missing_keywords[:10] %}
+                <span class="chip warn">{{ keyword }}</span>
+            {% else %}
+                <span class="muted">No missing target keywords were identified.</span>
+            {% endfor %}
+        </p>
+    </div>
+
+    {% if analysis.has_text %}
+    <div class="panel">
+        <h3>Suggested Job Roles</h3>
+        {% for role, details in job_matches[:3] %}
+            <div style="margin-bottom: 15px; padding: 12px; border: 1px solid #dbe2ea; border-radius: 10px; background:#f8fafc;">
+                <p><b>{{ role }}:</b> <span class="score-val">{{ details.score }}% match</span></p>
+                <p><b>Matched Skills:</b> 
+                    {% for skill in details.matched_skills %}
+                        <span class="chip good">{{ skill }}</span>
+                    {% endfor %}
+                </p>
+                {% if details.missing_skills %}
+                    <p><b>Missing Skills:</b> 
+                        {% for skill in details.missing_skills %}
+                            <span class="chip warn">{{ skill }}</span>
+                        {% endfor %}
+                    </p>
+                {% endif %}
+            </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    {% if analysis.has_text %}
+    <div class="panel" style="background-color: #f0fdfa; border: 2px solid #14b8a6;">
+        <h3>Live Jobs from LinkedIn, Naukri, and Glassdoor</h3>
+        <p style="margin-bottom: 15px; color: #475569;">Freshly indexed job postings matched using your resume skills and role alignment.</p>
+
+        {% if job_recommendations %}
+            {% for job in job_recommendations %}
+                <div class="job-card">
+                    <div class="job-header">
+                        <h4 class="job-title">
+                            <a href="{{ job.url }}" target="_blank" rel="noopener noreferrer">
+                                {{ job.title }}
+                            </a>
+                        </h4>
+                        <span class="job-source">{{ job.source }}</span>
+                    </div>
+                    <div class="job-details">
+                        <p><strong>Company:</strong> {{ job.company }}</p>
+                        <p><strong>Location:</strong> {{ job.location }}</p>
+                        <p><strong>Posted:</strong> {{ job.posted or "Recent" }}</p>
+                        <p><strong>Salary:</strong> {{ job.salary }}</p>
+                        {% if job.description %}
+                            <p class="job-description">{{ job.description }}</p>
+                        {% endif %}
+                    </div>
+                    <a href="{{ job.url }}" target="_blank" rel="noopener noreferrer" class="apply-btn">
+                        View Job Posting
+                    </a>
+                </div>
+            {% endfor %}
+        {% else %}
+            <div class="recommendation-item" style="border-left-color:#0ea5e9; background:#eff6ff;">
+                No recent live postings were found at this moment for your keyword set. Try uploading a more detailed resume or adding a specific job description.
+            </div>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    <div class="panel">
+        <h3>Improvement Tips</h3>
+        <ul class="recommendation-list">
+            {% for tip in analysis.improvement_tips %}
+                <li class="recommendation-item">{{ tip }}</li>
+            {% else %}
+                <li class="recommendation-item">The resume already covers the core ATS signals detected by this platform.</li>
+            {% endfor %}
+        </ul>
+    </div>
+
+    <div class="panel">
+        <h3>Recommended Courses</h3>
+        <ul class="recommendation-list">
+            {% for skill, course in recommendations.items() %}
+                <li class="recommendation-item">
+                    <strong>{{ skill.upper() }}:</strong> {{ course }}
+                </li>
+            {% else %}
+                <li><strong>Excellent!</strong> Your profile already matches our target skill set perfectly.</li>
+            {% endfor %}
+        </ul>
+    </div>
+
+    {% if analysis.has_text and analysis.raw_text %}
+    <div class="panel">
+        <h3>Extracted Text Preview</h3>
+        <div class="text-preview">{{ analysis.raw_text[:900] }}{% if analysis.raw_text|length > 900 %}...{% endif %}</div>
+    </div>
+    {% endif %}
+    </div>
     {% endif %}
 </body>
 </html>
