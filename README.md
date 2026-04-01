@@ -14,6 +14,7 @@ An intelligent career platform that analyzes resumes, provides ATS scores, and r
 ### 📄 Cold Email PDF Export
 - Generate a recruiter-ready cold email from uploaded resume analysis
 - Download the generated cold email as a PDF directly from the results page
+- Uses `reportlab` as primary PDF engine with `fpdf2` fallback for runtime compatibility
 
 ### 💼 Job Recommendations
 - **Live Multi-Platform Job Search**: Fetch recent jobs from:
@@ -105,6 +106,7 @@ The application will be available at `http://localhost:8000`
 
 This repository is configured to deploy the Flask app on Vercel using:
 - `api/index.py` as the Vercel Python entrypoint
+- `api/requirements.txt` to ensure the Vercel Python runtime installs project dependencies (including `reportlab` and `fpdf2` for cold email PDF export)
 - `vercel.json` for route rewrites so all paths go to Flask
 
 ### 1. Push your latest code to GitHub

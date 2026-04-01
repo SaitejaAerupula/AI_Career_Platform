@@ -204,6 +204,37 @@
                     <div class="hint">Providing this field gives a targeted ATS score and better gap analysis.</div>
                 </div>
 
+                <div class="field" style="background:#f8fafc; border:1px solid #dbe2ea; border-radius:12px; padding:14px;">
+                    <label style="margin-bottom:10px;">Job Alert Engine (Optional)</label>
+                    <div style="display:flex; align-items:center; gap:8px; margin-bottom:10px;">
+                        <input type="checkbox" id="enable_job_alerts" name="enable_job_alerts" style="width:auto;">
+                        <label for="enable_job_alerts" style="margin:0; font-weight:600;">Enable daily/weekly job alerts for this profile</label>
+                    </div>
+
+                    <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap:10px;">
+                        <div>
+                            <label for="alert_frequency">Frequency</label>
+                            <select id="alert_frequency" name="alert_frequency" style="width:100%; padding:10px 12px; border:1px solid #d1d5db; border-radius:10px; background:#fff;">
+                                <option value="weekly" selected>Weekly</option>
+                                <option value="daily">Daily</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="alert_location">Preferred Location</label>
+                            <input type="text" id="alert_location" name="alert_location" placeholder="India / Bangalore / Remote">
+                        </div>
+                        <div>
+                            <label for="alert_min_salary">Min Salary (optional)</label>
+                            <input type="number" id="alert_min_salary" name="alert_min_salary" min="0" step="1" placeholder="500000">
+                        </div>
+                        <div>
+                            <label for="alert_max_salary">Max Salary (optional)</label>
+                            <input type="number" id="alert_max_salary" name="alert_max_salary" min="0" step="1" placeholder="2500000">
+                        </div>
+                    </div>
+                    <div class="hint">If enabled, the system stores your alert preferences and sends matching role digests by email.</div>
+                </div>
+
                 <button type="submit">Analyze Resume</button>
             </form>
         </section>
